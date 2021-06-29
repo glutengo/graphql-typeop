@@ -1,0 +1,21 @@
+{
+  "name": "graphql-typeop",
+  "version": "0.1.0-SNAPSHOT",
+  "description": "Build GraphQL operations via TypeScript class definitions",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "build:watch": "tsc --project tsconfig.json --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Markus Glutting",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.3.4",
+    "webpack": "^5.40.0"
+  },
+  "dependencies": {
+    "graphql": "^15.5.1",
+    "reflect-metadata": "^0.1.13"
+  }
+}
