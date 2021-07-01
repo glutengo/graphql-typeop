@@ -5,7 +5,7 @@ const CLASS_DECORATOR = 'ObjectType';
 const FIELD_DECORATOR = 'Field';
 
 function hasClassWithObjectTypeDecorator(sourceFile: ts.SourceFile) {
-  return !!sourceFile.statements.find(s => ts.isClassDeclaration(s) && hasObjectTypeDecorator(s));
+  return !!sourceFile.statements.find(s => typescript.isClassDeclaration(s) && hasObjectTypeDecorator(s));
 }
 
 function hasObjectTypeDecorator(node) {
@@ -29,10 +29,10 @@ function getTypeIdentifier(type) {
 }
 
 export class GraphQLTransformer {
-  static create(program: Program) {
+  static create(program: Program, typescript) {
     const typeChecker = program.getTypeChecker();
     return function (context: ts.TransformationContext) {
-      return (rootNode) => ts.visitNode(rootNode, visit);
+      return (rootNode) => typescript.visitNode(rootNode, visit);
 
       function visit(node) {
         // return ts.visitEachChild(node, visit, context);
@@ -44,34 +44,34 @@ export class GraphQLTransformer {
           ]);
           // return ts.visitEachChild(updated, visit, context);
         }*/
-        if (ts.isPropertyDeclaration(node) && ts.isClassDeclaration(node.parent) && hasObjectTypeDecorator(node.parent)) {
+        if (typescript.isPropertyDeclaration(node) && typescript.isClassDeclaration(node.parent) && hasObjectTypeDecorator(node.parent)) {
           const args = [];
           let typeArg = undefined;
-          let optionsArg = ts.factory.createObjectLiteralExpression();
+          let optionsArg = typescript.factory.createObjectLiteralExpression();
           if (node.type) {
             const type = typeChecker.getTypeAtLocation(node.type);
             const symbol = type.getSymbol();
             // get type
             if (symbol && symbol.getName() === 'Array') {
               // @ts-ignore
-              typeArg =  ts.factory.createIdentifier(getTypeIdentifier(type.typeArguments[0]));
+              typeArg =  typescript.factory.createIdentifier(getTypeIdentifier(type.typeArguments[0]));
             }
           }
           // add options
           if (node.questionToken) {
             // @ts-ignore
-            optionsArg = ts.factory.updateObjectLiteralExpression(optionsArg, [ts.factory.createPropertyAssignment('nullable', ts.factory.createTrue())]);
+            optionsArg = typescript.factory.updateObjectLiteralExpression(optionsArg, [typescript.factory.createPropertyAssignment('nullable', typescript.factory.createTrue())]);
           }
           // @ts-ignore
           const existingDecorator = getExistingFieldDecorator(node);
           if (existingDecorator) {
             const existingArgs = existingDecorator.expression.arguments;
-            const existingOptionsIndex = existingArgs.findIndex(a => ts.isObjectLiteralExpression(a));
+            const existingOptionsIndex = existingArgs.findIndex(a => typescript.isObjectLiteralExpression(a));
             if (existingOptionsIndex > -1) {
               const existingOptions = existingArgs[existingOptionsIndex];
-              existingDecorator.expression.arguments[existingOptionsIndex] = ts.factory.updateObjectLiteralExpression(existingOptions, [ ...optionsArg.properties, ...existingOptions.properties]);
+              existingDecorator.expression.arguments[existingOptionsIndex] = typescript.factory.updateObjectLiteralExpression(existingOptions, [ ...optionsArg.properties, ...existingOptions.properties]);
             } else {
-              existingDecorator.expression.arguments = ts.factory.createNodeArray([...existingArgs, optionsArg]);
+              existingDecorator.expression.arguments = typescript.factory.createNodeArray([...existingArgs, optionsArg]);
             }
             return node;
 
@@ -82,13 +82,13 @@ export class GraphQLTransformer {
             if (optionsArg) {
               args.push(optionsArg);
             }
-            const decorator = ts.factory.createDecorator(
-              ts.factory.createCallExpression(
-                ts.factory.createIdentifier(FIELD_DECORATOR),
+            const decorator = typescript.factory.createDecorator(
+              typescript.factory.createCallExpression(
+                typescript.factory.createIdentifier(FIELD_DECORATOR),
                 [], // typeArguments
                 args // ArgumentsArray
               ));
-            return ts.factory.updatePropertyDeclaration(
+            return typescript.factory.updatePropertyDeclaration(
               node,
               [
                 decorator
@@ -102,7 +102,7 @@ export class GraphQLTransformer {
           }
         }
         // Visit each Child-Node recursively with the same visit function
-        return ts.visitEachChild(node, visit, context);
+        return typescript.visitEachChild(node, visit, context);
       }
     }
   }

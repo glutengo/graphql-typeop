@@ -1,4 +1,4 @@
-import { Field, ObjectType, getFieldsDocument } from 'graphql-typeop';
+import { Field, ObjectType, getFieldsDocument } from '../dist/decorators';
 import { print } from 'graphql/language/printer'
 
 @ObjectType()
