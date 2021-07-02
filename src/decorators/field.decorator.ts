@@ -1,30 +1,40 @@
 import { getScalarType, isFunction, Newable } from "../util/class.util";
 import "reflect-metadata";
 import * as GraphQL from 'graphql';
-import { AstFieldOptions, AstVariableOptions, createQuery } from "../util/ast.util";
+import { ArgumentValue, AstFieldOptions, AstVariableOptions, createQuery } from "../util/ast.util";
 
 const metadataKey = Symbol('fields');
 
 /**
  * Metadata stored for a field
  */
-type FieldMetadata<T> = {
+type FieldMetadata<T, OwnArgs = any, QueryArgs = any> = {
   type: Newable<any>,
-  options: FieldOptions<T>
+  options: FieldOptions<T, OwnArgs, QueryArgs>
 }
 
 /**
  * Available options for field definition
  */
-export type FieldOptions<T> = {
+export type FieldOptions<Parent = any, OwnArgs = any, QueryArgs = any> = {
   /**
    * Whether the field is nullable
    */
-  nullable?: boolean,
+  nullable?: boolean;
   /**
    * Field alias. Should be used to map a field which is not part of the GraphQL schema to a field which is part of the schema
    */
-  aliasFor?: keyof T & string
+  aliasFor?: keyof Parent & string;
+  /**
+   * Whether to skip the field. If specified, a @skip() directive will be included in the query. The property value is used as the value of the if argument of the directive.
+   */
+  skip?: ArgumentValue<QueryArgs>;
+
+  /**
+   * Map between field arguments and query variables or actual values
+   */
+  // args?: {key: keyof OwnArgs, value: keyof QueryArgs}[]
+  args?: {[key in keyof OwnArgs]: ArgumentValue<QueryArgs>}
 }
 
 /**
@@ -41,7 +51,7 @@ type ClassMetadata<T> = (Map<string, FieldMetadata<T>>);
  * @param options the options to use for the field. Ignored when {@param typeOrOptions} is of type object
  * @returns the field decorator
  */
-export function Field<T>(typeOrOptions?: Newable<any> | FieldOptions<T>, options?: FieldOptions<T>): PropertyDecorator {
+export function Field<Parent = any, OwnArgs = any, OtherArgs = any>(typeOrOptions?: Newable<any> | FieldOptions<Parent, OwnArgs, OtherArgs>, options?: FieldOptions<Parent, OwnArgs, OtherArgs>): PropertyDecorator {
   return(target, key) => {
     // first parameter can either be the type or the options
     let t: Newable<any>;
@@ -56,7 +66,7 @@ export function Field<T>(typeOrOptions?: Newable<any> | FieldOptions<T>, options
     }
     options = {...options};
     if (t) {
-      const fields = (Reflect.getMetadata(metadataKey, target) as ClassMetadata<T>) ?? new Map<string, FieldMetadata<T>>();
+      const fields = (Reflect.getMetadata(metadataKey, target) as ClassMetadata<Parent>) ?? new Map<string, FieldMetadata<Parent>>();
       fields.set(key as string, { type: t, options});
       Reflect.defineMetadata(metadataKey, fields, target);
     }
@@ -71,17 +81,14 @@ export function Field<T>(typeOrOptions?: Newable<any> | FieldOptions<T>, options
  * @param a the (optional) class representing the arguments of the query
  * @returns a GraphQL DocumentNode
  */
-export function getFieldsDocument<T, A>(title: string, t: Newable<T>, a?: Newable<A>): GraphQL.DocumentNode {
+export function getFieldsDocument<T, A>(t: Newable<T>, a?: Newable<A>): GraphQL.DocumentNode {
+  const fields = getFieldMetadata(t);
+  const result = fields.get('result');
   return {
     kind: 'Document',
     definitions: [
       createQuery({
-        selections: [{
-          name: title,
-          alias: 'result',
-          selections: getFieldOptions(t),
-          arguments: a ? getArguments(a) : undefined
-        }],
+        selections: getFieldOptions(t),
         variables: a ? getVariableOptions(a) : undefined
       })
     ]
@@ -91,11 +98,6 @@ export function getFieldsDocument<T, A>(title: string, t: Newable<T>, a?: Newabl
 
 function getFieldMetadata<T>(t: Newable<T>): ClassMetadata<T> {
   return Reflect.getMetadata(metadataKey, new t() ?? new Map<String, FieldMetadata<T>>());
-}
-
-function getArguments<A>(a: Newable<A>): string[] {
-  const fields = getFieldMetadata(a);
-  return fields ? Array.from(fields.keys()) : [];
 }
 
 function getVariableOptions<A>(a: Newable<A>): AstVariableOptions[] {
@@ -117,7 +119,9 @@ function getFieldOptions<T>(t: Newable<T>): AstFieldOptions[] {
     return {
       name: v.options.aliasFor ?? k,
       alias: v.options.aliasFor ? k : undefined,
-      selections: v?.type && isFunction(v.type) ? getFieldOptions(v.type) : undefined
+      selections: v?.type && isFunction(v.type) ? getFieldOptions(v.type) : undefined,
+      skip: v.options.skip,
+      arguments: v.options.args
     }
   }) : [];
 }

@@ -1,10 +1,15 @@
-import { ArgumentNode, FieldNode, NameNode, OperationDefinitionNode, ValueNode, VariableDefinitionNode, VariableNode } from 'graphql';
+import { ArgumentNode, DirectiveNode, FieldNode, NameNode, OperationDefinitionNode, ValueNode, VariableDefinitionNode, VariableNode } from 'graphql';
+
+export type ScalarValue = number | string | boolean;
+export type VariableValue<T> = `$${keyof T & string}`;
+export type ArgumentValue<T> = VariableValue<T> | number | boolean | `"${string}"`;
 
 export interface AstFieldOptions {
   name: string;
   alias?: string;
-  arguments?: string[],
-  selections?: AstFieldOptions[]
+  arguments?: {[key: string]: ArgumentValue<any>},
+  selections?: AstFieldOptions[],
+  skip?: ArgumentValue<any>
 }
 
 export interface AstQueryOptions {
@@ -21,6 +26,11 @@ export interface AstVariableOptions {
   list?: boolean;
 }
 
+export interface AstDirectiveOptions {
+  name: string;
+  arguments?: {name: string, value: ArgumentValue<any>}[];
+}
+
 export function createQuery(options: AstQueryOptions): OperationDefinitionNode {
   return {
     kind: 'OperationDefinition',
@@ -35,9 +45,18 @@ export function createField(options: AstFieldOptions): FieldNode {
     kind: 'Field',
     name: createName(options.name),
     alias: options.alias ? createName(options.alias) : undefined,
-    arguments: options.arguments ? options.arguments.map(a => createArgument(a)) : [],
-    selectionSet: options.selections? { kind: 'SelectionSet', selections: options.selections.map(s => createField(s))} : undefined
+    arguments: options.arguments ? Object.keys(options.arguments).map(k => createArgument(k, options.arguments[k])) : [],
+    selectionSet: options.selections? { kind: 'SelectionSet', selections: options.selections.map(s => createField(s))} : undefined,
+    directives: options.skip ? [createDirective({name: 'skip', arguments: [{name: 'if', value: options.skip}]})] : undefined
   };
+}
+
+export function createDirective(options: AstDirectiveOptions): DirectiveNode {
+  return {
+    kind: 'Directive',
+    name: createName(options.name),
+    arguments: options.arguments.map(a => createArgument(a.name, a.value))
+  }
 }
 
 export function createName(name: string): NameNode {
@@ -47,14 +66,41 @@ export function createName(name: string): NameNode {
   }
 }
 
-export function createArgument(name: string): ArgumentNode {
+export function createArgument(name: string, value: ArgumentValue<any>): ArgumentNode {
   return {
     kind: 'Argument',
     name: createName(name),
-    value: {
-      kind: 'Variable',
-      name: createName(name)
-    }
+    value: createValueNode(value)
+  }
+}
+
+export function createValueNode(value: ArgumentValue<any>): ValueNode {
+  switch (typeof value) {
+    case 'string':
+      if (value.startsWith('$')) {
+        return {
+          kind: 'Variable',
+          name: createName(value.substring(1))
+        }
+      } else {
+        const match = value.match(/"(.*)"/);
+        if (match) {
+          return {
+            kind: 'StringValue',
+            value: match[1]
+          }
+        }
+      }
+    case 'number':
+      return {
+        kind: 'IntValue',
+        value: `${value}`
+      };
+    case 'boolean':
+      return {
+        kind: 'BooleanValue',
+        value
+      };
   }
 }
 
