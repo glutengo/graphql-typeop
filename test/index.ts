@@ -1,4 +1,4 @@
-import { Field, ObjectType, getFieldsDocument } from '../dist/decorators';
+import { Field, ObjectType, getFieldsDocument, ArgsType } from '../dist/decorators';
 import { print } from 'graphql/language/printer'
 
 interface BaseObjectType {
@@ -6,10 +6,17 @@ interface BaseObjectType {
 }
 
 @ObjectType()
+class ArrayType {
+  id: number;
+  value: string;
+}
+
+@ObjectType()
 class MyObjectType implements Partial<BaseObjectType> {
   f: string;
   @Field<BaseObjectType, any, MyArgsType>({ aliasFor: 'f', skip: '$skipA' })
   a: string;
+  g: ArrayType[];
 }
 
 type Query = {
@@ -22,13 +29,13 @@ class MyQuery {
   result: MyObjectType;
 }
 
-@ObjectType()
+@ArgsType()
 class MyArgsType {
   a?: string;
   skipA?: boolean;
 }
 
-@ObjectType()
+@ArgsType()
 class MyObjectArgs {
   a?: string;
 }

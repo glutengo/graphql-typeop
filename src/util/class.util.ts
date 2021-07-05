@@ -9,17 +9,13 @@ export function isFunction(f: any): boolean {
   return !PRIMITVES.includes(f);
 }
 
-export function getScalarType(f?: Function, nullable?: boolean): string {
-  let t;
+export function getScalarType(f?: Function): string {
   switch (f) {
     case Number:
-      t = 'Int';
-      break;
+      return 'Int';
     case Boolean:
-      t = 'Boolean';
-      break;
+      return 'Boolean';
     default:
-      t = 'String';
+      return 'String';
   }
-  return `${t}${nullable ? '' : '!'}`
 }

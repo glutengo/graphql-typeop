@@ -22,7 +22,7 @@ const compileProject = (fileName) => {
 const compileAndRun = file => {
     tsNode({ files: [file], compilerOptions: tsConfig.compilerOptions, transformers: p => ({
       before: [
-        transformer.create(p)
+        transformer.create(p, 'decorators_1.')
       ]
     }) });
     const required = require(file);

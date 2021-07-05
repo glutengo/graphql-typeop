@@ -1,7 +1,8 @@
-import { getScalarType, isFunction, Newable } from "../util/class.util";
-import "reflect-metadata";
+import { getScalarType, isFunction, Newable } from '../util/class.util';
+import 'reflect-metadata';
 import * as GraphQL from 'graphql';
-import { ArgumentValue, AstFieldOptions, AstVariableOptions, createQuery } from "../util/ast.util";
+import { ArgumentValue, AstFieldOptions, AstVariableOptions, createQuery } from '../util/ast.util';
+import { getVariableOptions } from './arg.decorator';
 
 const metadataKey = Symbol('fields');
 
@@ -17,10 +18,6 @@ type FieldMetadata<T, OwnArgs = any, QueryArgs = any> = {
  * Available options for field definition
  */
 export type FieldOptions<Parent = any, OwnArgs = any, QueryArgs = any> = {
-  /**
-   * Whether the field is nullable
-   */
-  nullable?: boolean;
   /**
    * Field alias. Should be used to map a field which is not part of the GraphQL schema to a field which is part of the schema
    */
@@ -40,7 +37,7 @@ export type FieldOptions<Parent = any, OwnArgs = any, QueryArgs = any> = {
 /**
  * Metadata stored for a class
  */
-type ClassMetadata<T> = (Map<string, FieldMetadata<T>>);
+type ObjectTypeMetadata<T> = Map<string, FieldMetadata<T>>;
 
 /**
  * Field decorator for fields in GraphQL type definitions
@@ -60,13 +57,13 @@ export function Field<Parent = any, OwnArgs = any, OtherArgs = any>(typeOrOption
     } else if (typeof typeOrOptions === 'object') {
       options = typeOrOptions;
     }
-    // if no type is passed, use TypeScript metadata. Note: this does not work for
+    // if no type is passed, use TypeScript metadata. Note: this does not work for array types
     if (!t) {
       t =  Reflect.getMetadata('design:type', target, key);
     }
     options = {...options};
     if (t) {
-      const fields = (Reflect.getMetadata(metadataKey, target) as ClassMetadata<Parent>) ?? new Map<string, FieldMetadata<Parent>>();
+      const fields = (Reflect.getMetadata(metadataKey, target) as ObjectTypeMetadata<Parent>) ?? new Map<string, FieldMetadata<Parent>>();
       fields.set(key as string, { type: t, options});
       Reflect.defineMetadata(metadataKey, fields, target);
     }
@@ -95,21 +92,8 @@ export function getFieldsDocument<T, A>(t: Newable<T>, a?: Newable<A>): GraphQL.
   }
 }
 
-
-function getFieldMetadata<T>(t: Newable<T>): ClassMetadata<T> {
-  return Reflect.getMetadata(metadataKey, new t() ?? new Map<String, FieldMetadata<T>>());
-}
-
-function getVariableOptions<A>(a: Newable<A>): AstVariableOptions[] {
-  const fields = getFieldMetadata(a);
-  return fields ? Array.from(fields.keys()).map(k => {
-    const v = fields.get(k);
-    return {
-      name: k,
-      type: getScalarType(v.type, true),
-      nullable: v.options.nullable
-    }
-  }) : [];
+function getFieldMetadata<T>(t: Newable<T>): ObjectTypeMetadata<T> {
+  return Reflect.getMetadata(metadataKey, new t()) ?? new Map<String, FieldMetadata<T>>();
 }
 
 function getFieldOptions<T>(t: Newable<T>): AstFieldOptions[] {
