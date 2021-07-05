@@ -8,16 +8,17 @@ const metadataKey = Symbol('fields');
 
 /**
  * Metadata stored for a field
+ *
  */
-type FieldMetadata<T, OwnArgs = any, QueryArgs = any> = {
+type FieldMetadata<T, FieldArgs = any, QueryVars = any> = {
   type: Newable<any>,
-  options: FieldOptions<T, OwnArgs, QueryArgs>
+  options: FieldOptions<T, FieldArgs, QueryVars>
 }
 
 /**
  * Available options for field definition
  */
-export type FieldOptions<Parent = any, OwnArgs = any, QueryArgs = any> = {
+export type FieldOptions<Parent = any, FieldArgs = any, QueryVars = any> = {
   /**
    * Field alias. Should be used to map a field which is not part of the GraphQL schema to a field which is part of the schema
    */
@@ -25,13 +26,12 @@ export type FieldOptions<Parent = any, OwnArgs = any, QueryArgs = any> = {
   /**
    * Whether to skip the field. If specified, a @skip() directive will be included in the query. The property value is used as the value of the if argument of the directive.
    */
-  skip?: ArgumentValue<QueryArgs>;
+  skip?: ArgumentValue<QueryVars>;
 
   /**
    * Map between field arguments and query variables or actual values
    */
-  // args?: {key: keyof OwnArgs, value: keyof QueryArgs}[]
-  args?: {[key in keyof OwnArgs]: ArgumentValue<QueryArgs>}
+  args?: {[key in keyof FieldArgs]: ArgumentValue<QueryVars>}
 }
 
 /**
@@ -48,7 +48,7 @@ type ObjectTypeMetadata<T> = Map<string, FieldMetadata<T>>;
  * @param options the options to use for the field. Ignored when {@param typeOrOptions} is of type object
  * @returns the field decorator
  */
-export function Field<Parent = any, OwnArgs = any, OtherArgs = any>(typeOrOptions?: Newable<any> | FieldOptions<Parent, OwnArgs, OtherArgs>, options?: FieldOptions<Parent, OwnArgs, OtherArgs>): PropertyDecorator {
+export function Field<Parent = any, OwnArgs = any, QueryVars = OwnArgs>(typeOrOptions?: Newable<any> | FieldOptions<Parent, OwnArgs, QueryVars>, options?: FieldOptions<Parent, OwnArgs, QueryVars>): PropertyDecorator {
   return(target, key) => {
     // first parameter can either be the type or the options
     let t: Newable<any>;

@@ -63,12 +63,11 @@ export class GraphQLTransformer {
         const args = [];
         let typeArg = getTypeArg(node);
         let optionsArg = context.factory.createObjectLiteralExpression();
-        // add options
-        if (node.questionToken) {
-          optionsArg = context.factory.updateObjectLiteralExpression(optionsArg, [context.factory.createPropertyAssignment('nullable', context.factory.createTrue())]);
-        }
+        // add implicit options
+        optionsArg = addImplicitOptions(node, decoratorType, optionsArg);
         const existingDecorator = getExistingDecorator(node, decoratorType);
         if (existingDecorator) {
+          optionsArg = addImplicitOptionsToExistingDecorator(existingDecorator, decoratorType, optionsArg);
           const existingArgs = existingDecorator.expression.arguments;
           const existingOptionsIndex = existingArgs.findIndex(a => ts.isObjectLiteralExpression(a));
           if (existingOptionsIndex > -1) {
@@ -109,14 +108,61 @@ export class GraphQLTransformer {
         }
       }
 
+      function addImplicitOptions(node, decoratorType: DecoratorType, options: ts.ObjectLiteralExpression): ts.ObjectLiteralExpression {
+        switch (decoratorType) {
+          case DecoratorType.ARG:
+            // if question token is present, make argument optional
+            if (node.questionToken) {
+              return context.factory.updateObjectLiteralExpression(
+                options,
+                [
+                  ...options.properties,
+                  context.factory.createPropertyAssignment('nullable', context.factory.createTrue())
+                ]);
+            }
+            return options;
+          default:
+            return options;
+        }
+      }
+
+      function addImplicitOptionsToExistingDecorator(decorator, decoratorType: DecoratorType, options: ts.ObjectLiteralExpression): ts.ObjectLiteralExpression {
+        switch (decoratorType) {
+          case DecoratorType.FIELD:
+            const typeArgs = decorator.expression.typeArguments;
+            const fieldArgsType = typeArgs[1];
+            // assume that fieldArgs and queryVars are the same if only one is given
+            const queryVarsType = typeArgs[2] || fieldArgsType;
+            // look for each fieldArg in queryVars and map them if a match is found
+            if (fieldArgsType) {
+              const fieldArgs = typeChecker.getPropertiesOfType(typeChecker.getTypeAtLocation(fieldArgsType));
+              const queryVars = typeChecker.getPropertiesOfType(typeChecker.getTypeAtLocation(queryVarsType));
+              const args = fieldArgs.reduce((res, arg) => {
+                const correspondingQueryVar = queryVars.find(v => v.escapedName === arg.escapedName);
+                if (correspondingQueryVar) {
+                  res.push(context.factory.createPropertyAssignment(arg.escapedName as string, context.factory.createStringLiteral(`$${arg.escapedName}`)));
+                }
+                return res;
+              }, []);
+              options = context.factory.updateObjectLiteralExpression(
+                options,
+                [
+                  ...(options.properties || []),
+                  context.factory.createPropertyAssignment('args', context.factory.createObjectLiteralExpression(args))
+                ]);
+            }
+            return options;
+          default:
+            return options;
+        }
+      }
+
       function getTypeArg(node) {
         if (node.type) {
           const type = typeChecker.getTypeAtLocation(node.type);
           const symbol = type.getSymbol();
-          // get type
           if (symbol && symbol.getName() === 'Array') {
-            // @ts-ignore
-            const arrayType = type.typeArguments[0];
+            const arrayType = (type as any).typeArguments[0];
             return context.factory.createIdentifier(getTypeIdentifier(arrayType, typeChecker));
           }
         }
