@@ -1,4 +1,4 @@
-import { Field, ObjectType, getFieldsDocument, ArgsType } from '../dist/decorators';
+import { Field, ObjectType, getFieldsDocument, ArgsType, getMutation, Arg } from '../dist/decorators';
 import { print } from 'graphql/language/printer'
 
 interface BaseObjectType {
@@ -25,14 +25,20 @@ type Query = {
 
 @ObjectType()
 class MyQuery {
-  @Field<Query, MyObjectArgs, MyArgsType>({ aliasFor: 'getMyObjectType', args: {a: '$a'} })
+  @Field<Query, MyObjectArgs, MyArgsType>()
   result: MyObjectType;
+}
+
+class CompositeUser {
+  login: string;
 }
 
 @ArgsType()
 class MyArgsType {
   a?: string;
   skipA?: boolean;
+  @Arg(CompositeUser)
+  user: CompositeUser;
 }
 
 @ArgsType()
@@ -40,5 +46,7 @@ class MyObjectArgs {
   a?: string;
 }
 
-const doc = getFieldsDocument(MyQuery, MyArgsType);
+
+
+const doc = getMutation(MyQuery, MyArgsType);
 console.log(print(doc));

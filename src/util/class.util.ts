@@ -15,7 +15,9 @@ export function getScalarType(f?: Function): string {
       return 'Int';
     case Boolean:
       return 'Boolean';
+    case String:
+      return 'String'
     default:
-      return 'String';
+      return f.name;
   }
 }

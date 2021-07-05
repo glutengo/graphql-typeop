@@ -1,7 +1,7 @@
 const tsConfig = require( '../../tsconfig.json');
 const ts = require('typescript');
 const tsNode = require('ts-node').register;
-const transformer = require('../../dist/transformers/graphql.transformer').GraphQLTransformer;
+const transformer = require('../../dist/transformers/graphql.transformer').default;
 
 const compileProject = (fileName) => {
     const { options, fileNames } = ts.parseJsonConfigFileContent(

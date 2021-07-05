@@ -23,13 +23,10 @@ function getTypeIdentifier(type: ts.Type, typeChecker: ts.TypeChecker) {
   if (type.flags === ts.TypeFlags.String) {
     return String.name;
   }
-  if (type.isClass()) {
-    return typeChecker.typeToString(type);
-  }
-  return Number.name;
+  return typeChecker.typeToString(type);
 }
 
-export class GraphQLTransformer {
+export default class GraphQLTransformer {
   static create(program: ts.Program, importPrefix = '') {
     const typeChecker = program.getTypeChecker();
     return function (context: ts.TransformationContext) {

@@ -40,6 +40,15 @@ export function createQuery(options: AstQueryOptions): OperationDefinitionNode {
   }
 }
 
+export function createMutation(options: AstQueryOptions): OperationDefinitionNode {
+  return {
+    kind: 'OperationDefinition',
+    operation: 'mutation',
+    selectionSet: { kind: 'SelectionSet', selections: options.selections.map(s => createField(s)) },
+    variableDefinitions: options.variables ? options.variables.map(v => createVariableDefinition(v)) : undefined
+  }
+}
+
 export function createField(options: AstFieldOptions): FieldNode {
   return {
     kind: 'Field',

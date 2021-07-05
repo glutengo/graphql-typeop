@@ -1,7 +1,7 @@
 import { getScalarType, isFunction, Newable } from '../util/class.util';
 import 'reflect-metadata';
 import * as GraphQL from 'graphql';
-import { ArgumentValue, AstFieldOptions, AstVariableOptions, createQuery } from '../util/ast.util';
+import { ArgumentValue, AstFieldOptions, AstVariableOptions, createMutation, createQuery } from '../util/ast.util';
 import { getVariableOptions } from './arg.decorator';
 
 const metadataKey = Symbol('fields');
@@ -79,12 +79,22 @@ export function Field<Parent = any, OwnArgs = any, QueryVars = OwnArgs>(typeOrOp
  * @returns a GraphQL DocumentNode
  */
 export function getFieldsDocument<T, A>(t: Newable<T>, a?: Newable<A>): GraphQL.DocumentNode {
-  const fields = getFieldMetadata(t);
-  const result = fields.get('result');
   return {
     kind: 'Document',
     definitions: [
       createQuery({
+        selections: getFieldOptions(t),
+        variables: a ? getVariableOptions(a) : undefined
+      })
+    ]
+  }
+}
+
+export function getMutation<T, A>(t: Newable<T>, a?: Newable<A>): GraphQL.DocumentNode {
+  return {
+    kind: 'Document',
+    definitions: [
+      createMutation({
         selections: getFieldOptions(t),
         variables: a ? getVariableOptions(a) : undefined
       })
