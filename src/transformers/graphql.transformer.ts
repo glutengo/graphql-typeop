@@ -7,6 +7,8 @@ enum DecoratorType {
   ARGS_TYPE = 'ArgsType'
 }
 
+const MODULE_NAME = 'graphql-typeop';
+
 function hasClassWithObjectTypeDecorator(sourceFile: ts.SourceFile) {
   return !!sourceFile.statements.find(s => ts.isClassDeclaration(s) && !!getExistingDecorator(s, DecoratorType.OBJECT_TYPE));
 }
@@ -33,16 +35,9 @@ export default class GraphQLTransformer {
       return (rootNode) => ts.visitNode(rootNode, visit);
 
       function visit(node) {
-        // TODO: handle imports
-        // return ts.visitEachChild(node, visit, context);
-        /*if (ts.isSourceFile(node) && hasClassWithObjectTypeDecorator(node)) {
-          // TODO: handle imports?
-          const updated = ts.updateSourceFileNode(node, [
-            // importStatement,
-            ...node.statements
-          ]);
-          // return ts.visitEachChild(updated, visit, context);
-        }*/
+        if (ts.isImportDeclaration(node)) {
+          return addImports(node);
+        }
 
         if (ts.isPropertyDeclaration(node) && ts.isClassDeclaration(node.parent)) {
           if (!!getExistingDecorator(node.parent, DecoratorType.OBJECT_TYPE)) {
@@ -144,7 +139,7 @@ export default class GraphQLTransformer {
               options = context.factory.updateObjectLiteralExpression(
                 options,
                 [
-                  ...(options.properties || []),
+                  ...(options.properties || []),
                   context.factory.createPropertyAssignment('args', context.factory.createObjectLiteralExpression(args))
                 ]);
             }
@@ -152,6 +147,29 @@ export default class GraphQLTransformer {
           default:
             return options;
         }
+      }
+
+      function addImports(node) {
+        const moduleSpecifierText = ((node as ts.ImportDeclaration).moduleSpecifier as ts.Identifier).text;
+        if (moduleSpecifierText.startsWith(MODULE_NAME)) {
+          const oldNamedBindings = (node.importClause.namedBindings as ts.NamedImports).elements;
+          const newNamedBindings = [DecoratorType.FIELD, DecoratorType.ARG].reduce((bindings, decoratorType) => {
+            if (!oldNamedBindings.find((b: ts.ImportSpecifier) => b.name.escapedText === decoratorType)) {
+              bindings.push(context.factory.createImportSpecifier(undefined, context.factory.createIdentifier(decoratorType)));
+            }
+            return bindings;
+          }, [])
+          const updatedNamedbindings = context.factory.updateNamedImports(node.importClause.namedBindings as ts.NamedImports, [...oldNamedBindings, ...newNamedBindings]);
+          const updatedImportClause = context.factory.updateImportClause(node.importClause, node.importClause.isTypeOnly, node.importClause.name, updatedNamedbindings);
+          return context.factory.updateImportDeclaration(
+            node,
+            node.decorators,
+            node.modifiers,
+            updatedImportClause,
+            node.moduleSpecifier
+          );
+        }
+        return node;
       }
 
       function getTypeArg(node) {
