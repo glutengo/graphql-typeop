@@ -1,43 +1,6 @@
-import { getScalarType, isFunction, Newable } from '../util/class.util';
 import 'reflect-metadata';
-import * as GraphQL from 'graphql';
-import { ArgumentValue, AstFieldOptions, AstVariableOptions, createMutation, createQuery } from '../util/ast.util';
-import { getVariableOptions } from './arg.decorator';
-
-const metadataKey = Symbol('fields');
-
-/**
- * Metadata stored for a field
- *
- */
-type FieldMetadata<T, FieldArgs = any, QueryVars = any> = {
-  type: Newable<any>,
-  options: FieldOptions<T, FieldArgs, QueryVars>
-}
-
-/**
- * Available options for field definition
- */
-export type FieldOptions<Parent = any, FieldArgs = any, QueryVars = any> = {
-  /**
-   * Field alias. Should be used to map a field which is not part of the GraphQL schema to a field which is part of the schema
-   */
-  aliasFor?: keyof Parent & string;
-  /**
-   * Whether to skip the field. If specified, a @skip() directive will be included in the query. The property value is used as the value of the if argument of the directive.
-   */
-  skip?: ArgumentValue<QueryVars>;
-
-  /**
-   * Map between field arguments and query variables or actual values
-   */
-  args?: {[key in keyof FieldArgs]: ArgumentValue<QueryVars>}
-}
-
-/**
- * Metadata stored for a class
- */
-type ObjectTypeMetadata<T> = Map<string, FieldMetadata<T>>;
+import { Newable } from '../util/class.util';
+import { FieldMetadata, fieldMetadataKey, FieldOptions, ObjectTypeMetadata } from '../util/reflection.util';
 
 /**
  * Field decorator for fields in GraphQL type definitions
@@ -63,59 +26,10 @@ export function Field<Parent = any, OwnArgs = any, QueryVars = OwnArgs>(typeOrOp
     }
     options = {...options};
     if (t) {
-      const fields = (Reflect.getMetadata(metadataKey, target) as ObjectTypeMetadata<Parent>) ?? new Map<string, FieldMetadata<Parent>>();
+      const fields = (Reflect.getMetadata(fieldMetadataKey, target) as ObjectTypeMetadata<Parent>) ?? new Map<string, FieldMetadata<Parent>>();
       fields.set(key as string, { type: t, options});
-      Reflect.defineMetadata(metadataKey, fields, target);
+      Reflect.defineMetadata(fieldMetadataKey, fields, target);
     }
   }
 }
 
-/**
- * builds a GraphQL AST document containing a query operation with the selection set specified via the fields in the given class
- *
- * @param title the name of the query to run
- * @param t the class which specifies the selection set
- * @param a the (optional) class representing the arguments of the query
- * @returns a GraphQL DocumentNode
- */
-export function getFieldsDocument<T, A>(t: Newable<T>, a?: Newable<A>): GraphQL.DocumentNode {
-  return {
-    kind: 'Document',
-    definitions: [
-      createQuery({
-        selections: getFieldOptions(t),
-        variables: a ? getVariableOptions(a) : undefined
-      })
-    ]
-  }
-}
-
-export function getMutation<T, A>(t: Newable<T>, a?: Newable<A>): GraphQL.DocumentNode {
-  return {
-    kind: 'Document',
-    definitions: [
-      createMutation({
-        selections: getFieldOptions(t),
-        variables: a ? getVariableOptions(a) : undefined
-      })
-    ]
-  }
-}
-
-function getFieldMetadata<T>(t: Newable<T>): ObjectTypeMetadata<T> {
-  return Reflect.getMetadata(metadataKey, new t()) ?? new Map<String, FieldMetadata<T>>();
-}
-
-function getFieldOptions<T>(t: Newable<T>): AstFieldOptions[] {
-  const fields = getFieldMetadata(t);
-  return fields ? Array.from(fields.keys()).map(k => {
-    const v = fields.get(k);
-    return {
-      name: v.options.aliasFor ?? k,
-      alias: v.options.aliasFor ? k : undefined,
-      selections: v?.type && isFunction(v.type) ? getFieldOptions(v.type) : undefined,
-      skip: v.options.skip,
-      arguments: v.options.args
-    }
-  }) : [];
-}

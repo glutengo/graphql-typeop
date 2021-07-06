@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "graphql": "^15.5.1",
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "ts-morph": "^11.0.0"
   }
 }

@@ -1,25 +1,7 @@
 import 'reflect-metadata';
-import { AstVariableOptions } from '../util/ast.util';
-import { getScalarType, Newable } from '../util/class.util';
+import { ArgMetadata, ArgObjectMetadata, ArgOptions, argsMetadataKey } from '../util/reflection.util';
+import { Newable } from '../util/class.util';
 
-const metadataKey = Symbol('args');
-
-/**
- * Metadata stored for an argument
- */
-type ArgMetadata = {
-  type: Newable<any>,
-  options: ArgOptions
-};
-
-/**
- * Available option for argument definition
- */
-export type ArgOptions = {
-  nullable?: boolean;
-}
-
-type ArgObjectMetadata = Map<string, ArgMetadata>;
 
 export function Arg(typeOrOptions?: Newable<any> | ArgOptions, options?: ArgOptions) {
   return (target, key) => {
@@ -35,28 +17,13 @@ export function Arg(typeOrOptions?: Newable<any> | ArgOptions, options?: ArgOpti
       t = Reflect.getMetadata('design:type', target, key);
     }
     if (t) {
-      const args = (Reflect.getMetadata(metadataKey, target) as ArgObjectMetadata) ?? new Map<string, ArgMetadata>();
+      const args = (Reflect.getMetadata(argsMetadataKey, target) as ArgObjectMetadata) ?? new Map<string, ArgMetadata>();
       args.set(key as string, { type: t, options });
-      Reflect.defineMetadata(metadataKey, args, target);
+      Reflect.defineMetadata(argsMetadataKey, args, target);
     }
   }
 }
 
-function getArgsMetadata(target): ArgObjectMetadata {
-  return Reflect.getMetadata(metadataKey, target) ?? new Map<String, ArgMetadata>();
-}
-
-export function getVariableOptions<A>(a: Newable<A>): AstVariableOptions[] {
-  const args = getArgsMetadata(new a());
-  return args ? Array.from(args.keys()).map(k => {
-    const v = args.get(k);
-    return {
-      name: k,
-      type: getScalarType(v.type),
-      nullable: v.options.nullable
-    }
-  }) : [];
-}
 
 
 
