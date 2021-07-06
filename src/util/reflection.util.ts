@@ -4,6 +4,7 @@ import { Newable } from './class.util';
 
 export const fieldMetadataKey = Symbol('fields');
 export const argsMetadataKey = Symbol('args');
+export const argsTypeMetadataKey = Symbol('argType');
 
 /**
  * Metadata stored for a field
@@ -62,7 +63,10 @@ export function getFieldMetadata<T>(t: Newable<T>): ObjectTypeMetadata<T> {
   return Reflect.getMetadata(fieldMetadataKey, new t()) ?? new Map<String, FieldMetadata<T>>();
 }
 
-
 export function getArgsMetadata(target): ArgObjectMetadata {
   return Reflect.getMetadata(argsMetadataKey, target) ?? new Map<String, ArgMetadata>();
+}
+
+export function getArgsTypeMetadata(target): string {
+  return Reflect.getMetadata(argsTypeMetadataKey, target);
 }

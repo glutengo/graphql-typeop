@@ -1,7 +1,7 @@
 import * as GraphQL from 'graphql';
 import { AstFieldOptions, AstVariableOptions, createMutation, createQuery } from '../util/ast.util';
 import { getScalarType, isFunction, Newable } from '../util/class.util';
-import { getArgsMetadata, getFieldMetadata } from '../util/reflection.util';
+import { getArgsMetadata, getArgsTypeMetadata, getFieldMetadata } from '../util/reflection.util';
 
 /**
  * builds a GraphQL AST document containing a query operation with the selection set specified via the fields in the given class
@@ -59,9 +59,10 @@ function getVariableOptions<A>(a: Newable<A>): AstVariableOptions[] {
   const args = getArgsMetadata(new a());
   return args ? Array.from(args.keys()).map(k => {
     const v = args.get(k);
+    const argsType = getArgsTypeMetadata(v.type);
     return {
       name: k,
-      type: getScalarType(v.type),
+      type: argsType || getScalarType(v.type),
       nullable: v.options.nullable
     }
   }) : [];

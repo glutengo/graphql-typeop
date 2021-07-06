@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import { ArgMetadata, ArgObjectMetadata, ArgOptions, argsMetadataKey } from '../util/reflection.util';
 import { Newable } from '../util/class.util';
 
-
 export function Arg(typeOrOptions?: Newable<any> | ArgOptions, options?: ArgOptions) {
   return (target, key) => {
     // first parameter can either be the type or the options

@@ -1,49 +1,47 @@
-const { Project } = require('ts-morph');
-
-export function addDecorators(tsConfigPath) {
-  const tsConfigFilePath = 'test/tsconfig.json';
-  const project = new Project({ tsConfigFilePath });
-  const sourceFile = project.getSourceFile('test/graphql.ts');
-  sourceFile.getClasses().forEach(c => {
-    addDecoratorIfMissing(c, { name: 'ArgsType', args: [] });
-  });
-  addImportIfMissing(sourceFile, { moduleSpecifier: 'graphql-typeop/decorators', namedImport: 'ArgsType' });
-  sourceFile.saveSync();
-}
-
-function addImportIfMissing(sourceFile, importDeclationOptions) {
-  const { namedImport, moduleSpecifier } = importDeclationOptions;
-  let existingImport = sourceFile.getImportDeclaration(dec => dec.getModuleSpecifierValue() === moduleSpecifier);
-  if (!existingImport) {
-    existingImport = sourceFile.addImportDeclaration({ moduleSpecifier: moduleSpecifier });
-  }
-  if (!existingImport.getNamedImports().find(i => i.getName() === namedImport)) {
-    existingImport.addNamedImport({ name: namedImport });
-    return true;
-  }
-}
-
-function addDecoratorIfMissing(c, decoratorOptions) {
-  const { name, args } = decoratorOptions;
-  if (!c.getDecorators().find(d => d.getName() === name)) {
-    c.addDecorator({ name, arguments: args });
-  }
-}
+const DEFAULT_SCALARS = [ 'String', 'Boolean', 'Int', 'Float', 'DateTime' ]
 
 export function plugin(schema, documents, config) {
-    const statements = [];
-    const typesMap = schema.getTypeMap();
-    Object.keys(typesMap)
-      .map(typeName => typesMap[typeName].astNode)
-      .filter(astNode => astNode && astNode.kind === 'InputObjectTypeDefinition')
-      .forEach(astNode => {
-        console.log(astNode.fields[0]);
-        const fields = astNode.fields.map(f => `${f.name.value}: string;`).join('\n');
-        statements.push(`
-@ArgsType()
-export class ${astNode.name.value}Impl implements ${astNode.name.value} {
+  const statements = [];
+  const typesMap = schema.getTypeMap();
+  Object.keys(typesMap)
+    .map(typeName => typesMap[typeName].astNode)
+    .filter(astNode => astNode && astNode.kind === 'InputObjectTypeDefinition')
+    .forEach(astNode => {
+      const name = astNode.name.value;
+      const fields = astNode.fields.map(f => getFieldDefinition(f)).join('\n');
+      statements.push(`
+@ArgsType('${name}')
+export class ${name}Impl implements ${name} {
   ${fields}
 }`)
-      });
-    return statements.join('\n');
+    });
+
+  const imports = [];
+  imports.push(`import { ArgsType } from 'graphql-typeop/decorators';`);
+
+  return {
+    content: '',
+    prepend: imports,
+    append: statements
+  }
+}
+
+function getFieldDefinition(field) {
+  const nameDefinition = field.name.value;
+  let type, typeDefinition;
+  switch (field.type.kind) {
+    case 'NamedType':
+      type = field.type.name.value;
+      typeDefinition = getTypeDefinition(type);
+      return `${nameDefinition}?: Maybe<${typeDefinition}>;`;
+    case 'NonNullType':
+      type = field.type.type.name.value;
+      typeDefinition = getTypeDefinition(type);
+      return `${nameDefinition}!: ${typeDefinition};`;
+      break;
+  }
+}
+
+function getTypeDefinition(type) {
+  return DEFAULT_SCALARS.indexOf(type) > -1 ? `Scalars['${type}']` : type;
 }

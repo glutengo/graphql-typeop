@@ -61,7 +61,7 @@ export default class GraphQLTransformer {
         if (existingDecorator) {
           optionsArg = addImplicitOptionsToExistingDecorator(existingDecorator, decoratorType, optionsArg);
           const existingArgs = existingDecorator.expression.arguments;
-          const existingOptionsIndex = existingArgs.findIndex(a => ts.isObjectLiteralExpression(a));
+          const existingOptionsIndex = existingArgs.findIndex(a => a && ts.isObjectLiteralExpression(a));
           if (existingOptionsIndex > -1) {
             const existingOptions = existingArgs[existingOptionsIndex];
             optionsArg = context.factory.updateObjectLiteralExpression(existingOptions, [...optionsArg.properties, ...existingOptions.properties])
@@ -122,6 +122,9 @@ export default class GraphQLTransformer {
         switch (decoratorType) {
           case DecoratorType.FIELD:
             const typeArgs = decorator.expression.typeArguments;
+            if (!typeArgs) {
+              return options;
+            }
             const fieldArgsType = typeArgs[1];
             // assume that fieldArgs and queryVars are the same if only one is given
             const queryVarsType = typeArgs[2] || fieldArgsType;
@@ -154,7 +157,7 @@ export default class GraphQLTransformer {
         if (moduleSpecifierText.startsWith(MODULE_NAME)) {
           const oldNamedBindings = (node.importClause.namedBindings as ts.NamedImports).elements;
           const newNamedBindings = [DecoratorType.FIELD, DecoratorType.ARG].reduce((bindings, decoratorType) => {
-            if (!oldNamedBindings.find((b: ts.ImportSpecifier) => b.name.escapedText === decoratorType)) {
+            if (!node.parent.classifiableNames.has(decoratorType) && !oldNamedBindings.find((b: ts.ImportSpecifier) => b.name.escapedText === decoratorType)) {
               bindings.push(context.factory.createImportSpecifier(undefined, context.factory.createIdentifier(decoratorType)));
             }
             return bindings;
