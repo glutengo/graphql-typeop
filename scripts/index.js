@@ -1,8 +1,8 @@
-const tsConfig = require( '../../tsconfig.json');
+const tsConfig = require( '../tsconfig.json');
 const ts = require('typescript');
 const tsNode = require('ts-node').register;
-const transformer = require('../../dist/transformers/graphql.transformer').default;
-const addDecorators = require('../../dist/plugins/graphql-codegen.plugin').addDecorators;
+const transformer = require('../dist/transformers/graphql.transformer').default;
+const addDecorators = require('../dist/plugins/graphql-codegen.plugin').addDecorators;
 
 const compileProject = (fileName) => {
     const { options, fileNames } = ts.parseJsonConfigFileContent(
@@ -31,8 +31,7 @@ const compileAndRun = file => {
 
 module.export = main = (args) => {
   //compileProject('./test/index.ts');
-  // compileAndRun('../index.ts');
-  addDecorators();
+  compileAndRun('../test/index.ts');
 }
 
 main();
