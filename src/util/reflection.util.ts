@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { ArgumentValue } from './ast.util';
+import { ArgumentValue, BooleanArgumentValue } from './ast.util';
 import { Newable } from './class.util';
 
 export const fieldMetadataKey = Symbol('fields');
@@ -26,7 +26,7 @@ export type FieldOptions<Parent = any, FieldArgs = any, QueryVars = any> = {
   /**
    * Whether to skip the field. If specified, a @skip() directive will be included in the query. The property value is used as the value of the if argument of the directive.
    */
-  skip?: ArgumentValue<QueryVars>;
+  skip?: BooleanArgumentValue<QueryVars>;
 
   /**
    * Map between field arguments and query variables or actual values
@@ -56,6 +56,9 @@ export type ArgObjectMetadata = Map<string, ArgMetadata>;
  * Available option for argument definition
  */
 export type ArgOptions = {
+  /**
+   * Whether to mark the field as nullable
+   */
   nullable?: boolean;
 }
 

@@ -30,7 +30,7 @@ class MyQuery {
   result: MyObjectType;
 }
 
-class CompositeUser {
+type CompositeUser = {
   login: string;
 }
 
@@ -38,7 +38,7 @@ class CompositeUser {
 class MyArgsType {
   a?: string;
   skipA?: boolean;
-  user: CompositeUser;
+  user?: CompositeUser;
 }
 
 @ArgsType()

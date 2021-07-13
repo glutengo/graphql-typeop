@@ -3,13 +3,14 @@ import { ArgumentNode, DirectiveNode, FieldNode, NameNode, OperationDefinitionNo
 export type ScalarValue = number | string | boolean;
 export type VariableValue<T> = `$${keyof T & string}`;
 export type ArgumentValue<T> = VariableValue<T> | number | boolean | `"${string}"`;
+export type BooleanArgumentValue<T> = VariableValue<T> | boolean;
 
 export interface AstFieldOptions {
   name: string;
   alias?: string;
   arguments?: {[key: string]: ArgumentValue<any>},
   selections?: AstFieldOptions[],
-  skip?: ArgumentValue<any>
+  skip?: BooleanArgumentValue<any>
 }
 
 export interface AstQueryOptions {
