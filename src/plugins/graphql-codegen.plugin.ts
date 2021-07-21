@@ -1,23 +1,22 @@
 const DEFAULT_SCALARS = [ 'String', 'Boolean', 'Int', 'Float', 'DateTime' ]
 
-export function plugin(schema, documents, config) {
-  const statements = [];
+export function plugin(schema) {
   const typesMap = schema.getTypeMap();
-  Object.keys(typesMap)
-    .map(typeName => typesMap[typeName].astNode)
-    .filter(astNode => astNode && astNode.kind === 'InputObjectTypeDefinition')
-    .forEach(astNode => {
+  const statements = Object.keys(typesMap).reduce((res, key) => {
+    const astNode = typesMap[key].astNode;
+    if (astNode && astNode.kind === 'InputObjectTypeDefinition') {
       const name = astNode.name.value;
-      const fields = astNode.fields.map(f => getFieldDefinition(f)).join('\n');
-      statements.push(`
+      const fields = astNode.fields.map(f => getFieldDefinition(f)).join('\n  ');
+      res.push(`
 @ArgsType('${name}')
 export class ${name}Impl implements ${name} {
   ${fields}
-}`)
-    });
-
-  const imports = [];
-  imports.push(`import { ArgsType } from 'graphql-typeop/decorators';`);
+}`
+      );
+    }
+    return res;
+  }, []);
+  const imports = [ `import { ArgsType } from 'graphql-typeop/decorators';` ];
 
   return {
     content: '',
@@ -38,7 +37,6 @@ function getFieldDefinition(field) {
       type = field.type.type.name.value;
       typeDefinition = getTypeDefinition(type);
       return `${nameDefinition}!: ${typeDefinition};`;
-      break;
   }
 }
 

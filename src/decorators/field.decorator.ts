@@ -26,7 +26,8 @@ export function Field<Parent = any, OwnArgs = any, QueryVars = OwnArgs>(typeOrOp
     }
     options = {...options};
     if (t) {
-      const fields = (Reflect.getMetadata(fieldMetadataKey, target) as ObjectTypeMetadata<Parent>) ?? new Map<string, FieldMetadata<Parent>>();
+      const existingFields = (Reflect.getMetadata(fieldMetadataKey, target) as ObjectTypeMetadata<Parent>) ?? new Map<string, FieldMetadata<Parent>>();
+      const fields = new Map(existingFields);
       fields.set(key as string, { type: t, options});
       Reflect.defineMetadata(fieldMetadataKey, fields, target);
     }
