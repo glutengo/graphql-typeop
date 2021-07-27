@@ -66,7 +66,7 @@ export default class GraphQLTransformer {
             const existingOptions = existingArgs[existingOptionsIndex];
             optionsArg = context.factory.updateObjectLiteralExpression(existingOptions, [...optionsArg.properties, ...existingOptions.properties])
           }
-          if (existingOptionsIndex === 0) {
+          if (typeArg) {
             // => type is not given, use constructed type
             args.push(typeArg);
           }
