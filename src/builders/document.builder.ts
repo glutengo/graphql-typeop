@@ -41,6 +41,25 @@ export function buildMutation<T, A>(t: Newable<T>, a?: Newable<A>): GraphQL.Docu
   }
 }
 
+
+/**
+ * builds a GraphQL AST document containing a subscription operation with the selection set specified via the fields in the given class
+ *
+ * @param t the class which specifies the selection set
+ * @param a the (optional) class representing the arguments of the mutation
+ * @returns a GraphQL DocumentNode
+ */
+export function buildSubscription<T, A>(t: Newable<T>, a?: Newable<A>): GraphQL.DocumentNode {
+  return {
+    kind: 'Document',
+    definitions: [
+      createMutation({
+        selections: getFieldOptions(t),
+        variables: a ? getVariableOptions(a) : undefined
+      })
+    ]
+  }
+}
 function getFieldOptions<T>(t: Newable<T>): AstFieldOptions[] {
   const fields = getFieldMetadata(t);
   return fields ? Array.from(fields.keys()).map(k => {

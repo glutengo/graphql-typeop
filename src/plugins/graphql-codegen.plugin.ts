@@ -26,20 +26,19 @@ export class ${name}Impl implements ${name} {
 }
 
 function getFieldDefinition(field) {
-  const nameDefinition = field.name.value;
-  let type, typeDefinition;
-  switch (field.type.kind) {
-    case 'NamedType':
-      type = field.type.name.value;
-      typeDefinition = getTypeDefinition(type);
-      return `${nameDefinition}?: Maybe<${typeDefinition}>;`;
-    case 'NonNullType':
-      type = field.type.type.name.value;
-      typeDefinition = getTypeDefinition(type);
-      return `${nameDefinition}!: ${typeDefinition};`;
+  return getDefinition(field.name.value, field.type);
+}
+
+function getDefinition(name, type, nonNull = false, list = false) {
+  if (type.kind === 'NamedType') {
+    return name + (nonNull ? '!: ' : '?: Maybe<') + getTypeDefinition(type.name.value, list) + (nonNull ? ';' : '>;');
+  } else if (type.kind === 'NonNullType') {
+    return getDefinition(name, type.type, true, list);
+  } else if (type.kind === 'ListType') {
+    return getDefinition(name, type.type, nonNull, true);
   }
 }
 
-function getTypeDefinition(type) {
-  return DEFAULT_SCALARS.indexOf(type) > -1 ? `Scalars['${type}']` : type;
+function getTypeDefinition(type, list) {
+  return (DEFAULT_SCALARS.indexOf(type) > -1 ? "Scalars['" + type + "']" : type) + (list ? '[]' : '');
 }

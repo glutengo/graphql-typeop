@@ -1,4 +1,14 @@
-import { ArgumentNode, DirectiveNode, FieldNode, NameNode, OperationDefinitionNode, ValueNode, VariableDefinitionNode, VariableNode } from 'graphql';
+import {
+  ArgumentNode,
+  DirectiveNode,
+  FieldNode,
+  NameNode,
+  OperationDefinitionNode,
+  OperationTypeNode,
+  ValueNode,
+  VariableDefinitionNode,
+  VariableNode
+} from 'graphql';
 
 export type ScalarValue = number | string | boolean;
 export type VariableValue<T> = `$${keyof T & string}`;
@@ -13,7 +23,7 @@ export interface AstFieldOptions {
   skip?: BooleanArgumentValue<any>
 }
 
-export interface AstQueryOptions {
+export interface AstOperationOptions {
   name?: string;
   selections: AstFieldOptions[],
   variables?: AstVariableOptions[]
@@ -32,19 +42,22 @@ export interface AstDirectiveOptions {
   arguments?: {name: string, value: ArgumentValue<any>}[];
 }
 
-export function createQuery(options: AstQueryOptions): OperationDefinitionNode {
-  return {
-    kind: 'OperationDefinition',
-    operation: 'query',
-    selectionSet: { kind: 'SelectionSet', selections: options.selections.map(s => createField(s)) },
-    variableDefinitions: options.variables ? options.variables.map(v => createVariableDefinition(v)) : undefined
-  }
+export function createQuery(options: AstOperationOptions): OperationDefinitionNode {
+  return createOperation('query', options);
 }
 
-export function createMutation(options: AstQueryOptions): OperationDefinitionNode {
+export function createMutation(options: AstOperationOptions): OperationDefinitionNode {
+  return createOperation('mutation', options);
+}
+
+export function createSubscription(options: AstOperationOptions): OperationDefinitionNode {
+  return createOperation('subscription', options);
+}
+
+function createOperation(operation: OperationTypeNode, options: AstOperationOptions): OperationDefinitionNode {
   return {
     kind: 'OperationDefinition',
-    operation: 'mutation',
+    operation,
     selectionSet: { kind: 'SelectionSet', selections: options.selections.map(s => createField(s)) },
     variableDefinitions: options.variables ? options.variables.map(v => createVariableDefinition(v)) : undefined
   }
