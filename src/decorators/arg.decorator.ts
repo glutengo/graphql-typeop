@@ -16,7 +16,8 @@ export function Arg(typeOrOptions?: Newable<any> | ArgOptions, options?: ArgOpti
       t = Reflect.getMetadata('design:type', target, key);
     }
     if (t) {
-      const args = (Reflect.getMetadata(argsMetadataKey, target) as ArgObjectMetadata) ?? new Map<string, ArgMetadata>();
+      const existingArgs = (Reflect.getMetadata(argsMetadataKey, target) as ArgObjectMetadata) ?? new Map<string, ArgMetadata>();
+      const args = new Map(existingArgs);
       args.set(key as string, { type: t, options });
       Reflect.defineMetadata(argsMetadataKey, args, target);
     }

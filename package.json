@@ -1,6 +1,6 @@
 {
   "name": "graphql-typeop",
-  "version": "0.2.0-SNAPSHOTB",
+  "version": "0.2.0-SNAPSHOTF",
   "description": "Build GraphQL operations via TypeScript class definitions",
   "main": "dist/index.js",
   "scripts": {

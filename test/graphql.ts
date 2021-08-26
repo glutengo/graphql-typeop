@@ -1,4 +1,4 @@
-import { ArgsType } from "graphql-typeop/decorators";
+import { ArgsType } from 'graphql-typeop/decorators';
 
 @ArgsType()
 class GetUserArgs {

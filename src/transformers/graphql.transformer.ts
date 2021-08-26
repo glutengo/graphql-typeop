@@ -71,8 +71,10 @@ export default class GraphQLTransformer {
             args.push(typeArg);
           }
           args.push(optionsArg);
-          existingDecorator.expression.arguments = context.factory.createNodeArray(args);
-          return node;
+          const decorator = context.factory.updateDecorator(existingDecorator, context.factory.createCallExpression(existingDecorator.expression.expression,
+            existingDecorator.expression.typeArguments, args));
+
+          return context.factory.updatePropertyDeclaration(node, [ decorator ], node.modifiers, node.name, node.questionToken || node.exclamationToken, node.type, node.initializer);
         } else {
           if (typeArg) {
             args.push(typeArg);

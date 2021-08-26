@@ -4,6 +4,9 @@ import { print } from 'graphql/language/printer'
 
 interface BaseObjectType {
   f?: string;
+  g?: ArrayType[];
+  h?: string;
+  i?: string;
 }
 
 @ObjectType()
@@ -18,6 +21,11 @@ class MyObjectType implements Partial<BaseObjectType> {
   @Field<BaseObjectType, any, MyArgsType>({ aliasFor: 'f', skip: '$skipA' })
   a: string;
   g: ArrayType[];
+}
+
+@ObjectType()
+class DetailObjectType extends MyObjectType {
+  i?: string;
 }
 
 type Query = {
@@ -42,11 +50,19 @@ class MyArgsType {
 }
 
 @ArgsType()
+class Extension1 extends MyArgsType {
+  b?: string;
+}
+
+@ArgsType()
+class Extension2 extends MyArgsType {
+  c?: string;
+}
+
+@ArgsType()
 class MyObjectArgs {
   a?: string;
 }
-
-
 
 const doc = buildMutation(MyQuery, MyArgsType);
 console.log(print(doc));
