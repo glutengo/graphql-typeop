@@ -60,7 +60,9 @@ Every property which belongs to an `@ObjectType` class and represents a GraphQL 
 The decorator accepts two optional parameters:
 
 #### Type
-The Type of the field. Can be passed as a TypeScript Class. If no type is passed, it is derived from the TypeScript metadata.
+The Type of the field. Can be passed as a TypeScript Class.
+If no type is passed, it is derived from the TypeScript metadata.
+Note: this is not possible for array types as TypeScript handles these as Objects.
 
 #### Options
 The options for the field. See [reflection.util.ts](src/util/reflection.util.ts).
@@ -75,7 +77,9 @@ Every property which belongs to an `@ArgsType` class and represents a GraphQL ar
 The decorator accepts two optional parameters:
 
 #### Type
-The Type of the argument. Can be passed as a TypeScript Class. If no type is passed, it is derived from the TypeScript metadata.
+The Type of the argument. Can be passed as a TypeScript Class.
+If no type is passed, it is derived from the TypeScript metadata.
+Note: this is not possible for array types as TypeScript handles these as Objects.
 
 #### Options
 The options for the argument. See [reflection.util.ts](src/util/reflection.util.ts).

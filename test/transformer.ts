@@ -1,6 +1,8 @@
 import { Field, ObjectType, ArgsType } from '../dist/decorators';
 import { buildMutation } from '../dist/builders';
 import { print } from 'graphql/language/printer'
+import { normalizeDoc } from './util';
+import * as chalk from 'chalk';
 
 interface BaseObjectType {
   f?: string;
@@ -65,4 +67,14 @@ class MyObjectArgs {
 }
 
 const doc = buildMutation(MyQuery, MyArgsType);
-console.log(print(doc));
+const expected = 'mutation ($a: String, $skipA: Boolean, $user: Object) { result(a: $a) { f a: f @skip(if: $skipA) g { id value } } }';
+
+if (normalizeDoc(print(doc)) === normalizeDoc(expected)) {
+  console.log(chalk.green("Transformer test successful"));
+} else {
+  console.warn("expected: ");
+  console.log(chalk.green(normalizeDoc(expected)));
+  console.warn("got: ");
+  console.log(chalk.red(normalizeDoc(print(doc))));
+  throw new Error("Transformer test failed");
+}

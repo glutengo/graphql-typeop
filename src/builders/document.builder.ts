@@ -83,7 +83,7 @@ function getVariableOptions<A>(a: Newable<A>): AstVariableOptions[] {
     return {
       name: k,
       type: argsType || getScalarType(v.type),
-      nullable: v.options.nullable
+      nullable: v.options?.nullable
     }
   }) : [];
 }
