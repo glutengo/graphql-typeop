@@ -19,14 +19,21 @@ export type FieldMetadata<T, FieldArgs = any, QueryVars = any> = {
  * Available options for field definition
  */
 export type FieldOptions<Parent = any, FieldArgs = any, QueryVars = any> = {
+
   /**
    * Field alias. Should be used to map a field which is not part of the GraphQL schema to a field which is part of the schema
    */
   aliasFor?: keyof Parent & string;
+
   /**
    * Whether to skip the field. If specified, a @skip() directive will be included in the query. The property value is used as the value of the if argument of the directive.
    */
   skip?: BooleanArgumentValue<QueryVars>;
+
+  /**
+   * Whether to include the field. If specified, a @include() directive will be included in the query. The property value is used as the value of the if argument of the directive.
+   */
+  include?: BooleanArgumentValue<QueryVars>;
 
   /**
    * Map between field arguments and query variables or actual values

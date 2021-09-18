@@ -20,7 +20,8 @@ export interface AstFieldOptions {
   alias?: string;
   arguments?: {[key: string]: ArgumentValue<any>},
   selections?: AstFieldOptions[],
-  skip?: BooleanArgumentValue<any>
+  skip?: BooleanArgumentValue<any>,
+  include?: BooleanArgumentValue<any>
 }
 
 export interface AstOperationOptions {
@@ -64,13 +65,20 @@ function createOperation(operation: OperationTypeNode, options: AstOperationOpti
 }
 
 export function createField(options: AstFieldOptions): FieldNode {
+  const directives = [];
+  if (options.skip) {
+    directives.push(createDirective({name: 'skip', arguments: [{name: 'if', value: options.skip}]}));
+  }
+  if (options.include) {
+    directives.push(createDirective({name: 'include', arguments: [{name: 'if', value: options.include}]}));
+  }
   return {
     kind: 'Field',
     name: createName(options.name),
     alias: options.alias ? createName(options.alias) : undefined,
     arguments: options.arguments ? Object.keys(options.arguments).map(k => createArgument(k, options.arguments[k])) : [],
     selectionSet: options.selections? { kind: 'SelectionSet', selections: options.selections.map(s => createField(s))} : undefined,
-    directives: options.skip ? [createDirective({name: 'skip', arguments: [{name: 'if', value: options.skip}]})] : undefined
+    directives
   };
 }
 

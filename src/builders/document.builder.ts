@@ -41,7 +41,6 @@ export function buildMutation<T, A>(t: Newable<T>, a?: Newable<A>): GraphQL.Docu
   }
 }
 
-
 /**
  * builds a GraphQL AST document containing a subscription operation with the selection set specified via the fields in the given class
  *
@@ -60,6 +59,7 @@ export function buildSubscription<T, A>(t: Newable<T>, a?: Newable<A>): GraphQL.
     ]
   }
 }
+
 function getFieldOptions<T>(t: Newable<T>): AstFieldOptions[] {
   const fields = getFieldMetadata(t);
   return fields ? Array.from(fields.keys()).map(k => {
@@ -69,6 +69,7 @@ function getFieldOptions<T>(t: Newable<T>): AstFieldOptions[] {
       alias: v.options.aliasFor ? k : undefined,
       selections: v?.type && isFunction(v.type) ? getFieldOptions(v.type) : undefined,
       skip: v.options.skip,
+      include: v.options.include,
       arguments: v.options.args
     }
   }) : [];

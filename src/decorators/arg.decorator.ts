@@ -2,6 +2,15 @@ import 'reflect-metadata';
 import { ArgMetadata, ArgObjectMetadata, ArgOptions, argsMetadataKey } from '../util/reflection.util';
 import { Newable } from '../util/class.util';
 
+/**
+ * Arg decorator for fields in GraphQL type definitions (args type)
+ *
+ * @param typeOrOptions the type or options to use for the field.
+ * If a function which represents a class is passed, this function is used as the type of the field.
+ * If an object is passed, this is interpreted as the options for the field and {@param options} is ignored as a consequence
+ * @param options the options to use for the field. Ignored when {@param typeOrOptions} is of type object
+ * @returns the field decorator
+ */
 export function Arg(typeOrOptions?: Newable<any> | ArgOptions, options?: ArgOptions) {
   return (target, key) => {
     // first parameter can either be the type or the options

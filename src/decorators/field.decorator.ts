@@ -3,7 +3,7 @@ import { Newable } from '../util/class.util';
 import { FieldMetadata, fieldMetadataKey, FieldOptions, ObjectTypeMetadata } from '../util/reflection.util';
 
 /**
- * Field decorator for fields in GraphQL type definitions
+ * Field decorator for fields in GraphQL type definitions (selection set)
  *
  * @param typeOrOptions the type or options to use for the field.
  * If a function which represents a class is passed, this function is used as the type of the field.

@@ -9,10 +9,6 @@ enum DecoratorType {
 
 const MODULE_NAME = 'graphql-typeop';
 
-function hasClassWithObjectTypeDecorator(sourceFile: ts.SourceFile) {
-  return !!sourceFile.statements.find(s => ts.isClassDeclaration(s) && !!getExistingDecorator(s, DecoratorType.OBJECT_TYPE));
-}
-
 function getExistingDecorator(node, decoratorType: DecoratorType) {
   return node.decorators &&
     node.decorators.find(d => d.expression && d.expression.expression && d.expression.expression.escapedText === decoratorType)
@@ -28,6 +24,9 @@ function getTypeIdentifier(type: ts.Type, typeChecker: ts.TypeChecker) {
   return typeChecker.typeToString(type);
 }
 
+/**
+ * TypeScript Transformer
+ */
 export default class GraphQLTransformer {
   static create(program: ts.Program, importPrefix = '') {
     const typeChecker = program.getTypeChecker();
