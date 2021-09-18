@@ -1,5 +1,6 @@
 # graphql-typeop
-
+[![npm version](https://badge.fury.io/js/graphql-typeop.svg)](https://www.npmjs.com/package/graphql-typeop) 
+[![pipeline status](https://github.com/glutengo/graphql-typeop/actions/workflows/npm-test.yml/badge.svg)](https://github.com/glutengo/graphql-typeop/actions)
 # Introduction
 This library introduces a new way of controlling and defining GraphQL return types: via TypeScript classes.
 The approach is strongly inspired by the code-first approach for using GraphQL in Nest.js server applications used in [@nestjs/graphql](https://github.com/nestjs/graphql) by [Kamil Mysliwiec](https://twitter.com/kammysliwiec).
