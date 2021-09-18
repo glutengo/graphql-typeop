@@ -12,6 +12,7 @@ function run() {
   devDependenciesBlackList.forEach(dep => delete packageJSON.peerDependencies[dep]);
   delete packageJSON.devDependencies;
   delete packageJSON.scripts;
+  fs.copyFileSync('README.md', path.join('dist', 'README.md'));
   fs.writeFileSync(path.join('dist', 'package.json'), JSON.stringify(packageJSON, null, 2));
   execSync('npm publish', { cwd: 'dist' })
 }
